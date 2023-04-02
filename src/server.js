@@ -11,7 +11,7 @@ const morganlogger = morgan('combined');
 app.use(morganlogger);
 
 
-app.post('/hello', async (req, res) => {
+app.get('/hello', async (req, res) => {
   return res.json({
     hello: "world"
   });
