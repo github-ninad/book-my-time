@@ -37,11 +37,12 @@ mutation Schedule_Appointment_Internal($email: String!, $name: String!, $start_d
 `;
 
 // execute the parent operation in Hasura
-const Schedule_Appointment_Internal_execute = async (variables) => {
+const Schedule_Appointment_Internal_execute = async (variables, req) => {
   const fetchResponse = await fetch(
     "https://touching-herring-78.hasura.app/v1/graphql",
     {
       method: 'POST',
+      headers: req.headers,
       body: JSON.stringify({
         query: Schedule_Appointment_Internal_HASURA_OPERATION,
         variables
@@ -63,7 +64,7 @@ app.post('/Schedule_Appointment', async (req, res) => {
   // run some business logic
 
   // execute the Hasura operation
-  const { data, errors } = await Schedule_Appointment_Internal_execute({ scheduleInput });
+  const { data, errors } = await Schedule_Appointment_Internal_execute({ scheduleInput }, req);
 
   // if Hasura operation errors, then throw error
   if (errors) {
@@ -96,11 +97,12 @@ mutation CancelAppointmentInternal($appointmentId: uuid!) {
 `;
 
 // execute the parent operation in Hasura
-const CancelAppointmentInternal_execute = async (variables) => {
+const CancelAppointmentInternal_execute = async (variables, req) => {
   const fetchResponse = await fetch(
     "https://touching-herring-78.hasura.app/v1/graphql",
     {
       method: 'POST',
+      headers: req.headers,
       body: JSON.stringify({
         query: CancelAppointmentInternal_HASURA_OPERATION,
         variables
@@ -122,7 +124,7 @@ app.post('/Cancel_Appointment', async (req, res) => {
   // run some business logic
 
   // execute the Hasura operation
-  const { data, errors } = await CancelAppointmentInternal_execute({ appointmentId });
+  const { data, errors } = await CancelAppointmentInternal_execute({ appointmentId }, req);
 
   // if Hasura operation errors, then throw error
   if (errors) {
