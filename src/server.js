@@ -1,7 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const morgan = require('morgan');
-const fetch = require("node-fetch")
+const nodefetch = require("node-fetch")
+const https = require('https');
 const app = express();
 const PORT = process.env.PORT || 8000;
 
@@ -9,7 +10,7 @@ const PORT = process.env.PORT || 8000;
 app.use(bodyParser.json());
 const morganlogger = morgan('combined');
 app.use(morganlogger);
-
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0
 
 //Endpoints
 
@@ -38,11 +39,17 @@ mutation Schedule_Appointment_Internal($email: String!, $name: String!, $start_d
 
 // execute the parent operation in Hasura
 const Schedule_Appointment_Internal_execute = async (variables, req) => {
-  const fetchResponse = await fetch(
+  const fetchResponse = await nodefetch(
     "https://touching-herring-78.hasura.app/v1/graphql",
     {
       method: 'POST',
-      headers: req.headers,
+      headers: {
+        "x-hasura-admin-secret": "i60TrY3974a4zCkVvXhgwAT1MTad2f5N0SSgERnDluFsFq3923PCeEML2IA7DRY6",
+        "Content-Type": "application/json",
+        "Accept": "*/*",
+        "Host": "touching-herring-78.hasura.app",
+        "Accept-Encoding": "gzip, deflate, br",
+      },
       body: JSON.stringify({
         query: Schedule_Appointment_Internal_HASURA_OPERATION,
         variables
@@ -59,12 +66,12 @@ const Schedule_Appointment_Internal_execute = async (variables, req) => {
 app.post('/Schedule_Appointment', async (req, res) => {
 
   // get request input
-  const { scheduleInput } = req.body.input;
+  const variables = req.body.input;
 
   // run some business logic
 
   // execute the Hasura operation
-  const { data, errors } = await Schedule_Appointment_Internal_execute({ scheduleInput }, req);
+  const { data, errors } = await Schedule_Appointment_Internal_execute(variables, req);
 
   // if Hasura operation errors, then throw error
   if (errors) {
@@ -73,7 +80,7 @@ app.post('/Schedule_Appointment', async (req, res) => {
 
   // success
   return res.json({
-    ...data.insert_user_one
+    ...data.insert_appointment_one
   })
 
 });
@@ -98,11 +105,17 @@ mutation CancelAppointmentInternal($appointmentId: uuid!) {
 
 // execute the parent operation in Hasura
 const CancelAppointmentInternal_execute = async (variables, req) => {
-  const fetchResponse = await fetch(
+  const fetchResponse = await nodefetch(
     "https://touching-herring-78.hasura.app/v1/graphql",
     {
       method: 'POST',
-      headers: req.headers,
+      headers: {
+        "x-hasura-admin-secret": "i60TrY3974a4zCkVvXhgwAT1MTad2f5N0SSgERnDluFsFq3923PCeEML2IA7DRY6",
+        "Content-Type": "application/json",
+        "Accept": "*/*",
+        "Host": "touching-herring-78.hasura.app",
+        "Accept-Encoding": "gzip, deflate, br",
+      },
       body: JSON.stringify({
         query: CancelAppointmentInternal_HASURA_OPERATION,
         variables
