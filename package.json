@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "nodemon -r esm src/server.js",
-    "deploy": "npm install && pm2 start index.js"
+    "deploy": "npm install && pm2 start server.js"
   },
   "dependencies": {
     "body-parser": "1.19.0",
