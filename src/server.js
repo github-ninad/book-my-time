@@ -99,8 +99,8 @@ app.post('/Cancel_Appointment', async (req, res) => {
   // if Hasura operation errors, then throw error
   if (errors) {
     return res.status(400).json(errors[0])
-  } else {
-    hasura.cancelReminder(data.update_appointment.returning.find(e => e).event_id)
+  } else if(data?.update_appointment?.affected_rows > 0) {
+    hasura.cancelReminder(data?.update_appointment?.returning?.find(e => e)?.event_id)
   }
 
   // success
