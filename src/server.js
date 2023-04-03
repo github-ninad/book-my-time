@@ -80,6 +80,7 @@ mutation CancelAppointmentInternal($appointmentId: uuid!) {
       start_datetime
       user_email
       iscancelled
+      notification_event_id
     }
   }
 }
@@ -91,21 +92,22 @@ app.post('/Cancel_Appointment', async (req, res) => {
   // get request input
   const { appointmentId } = req.body.input;
 
-  // run some business logic
-
   // execute the Hasura operation
   const { data, errors } = await hasura.execute(CancelAppointmentInternal_HASURA_OPERATION, { appointmentId }, req);
 
   // if Hasura operation errors, then throw error
+  let output
   if (errors) {
     return res.status(400).json(errors[0])
-  } else if(data?.update_appointment?.affected_rows > 0) {
-    hasura.cancelReminder(data?.update_appointment?.returning?.find(e => e)?.event_id)
+  } else if (data?.update_appointment?.affected_rows > 0) {
+    output = data?.update_appointment?.returning?.find(e => e)
+    hasura.cancelReminder(data?.update_appointment?.returning?.find(e => e)?.notification_event_id)
   }
 
   // success
   return res.json({
-    ...data.update_appointment
+    isCancelled: output.iscancelled,
+    appointment_id: appointmentId
   })
 
 });
