@@ -3,6 +3,8 @@ const bodyParser = require("body-parser");
 const morgan = require('morgan');
 const nodefetch = require("node-fetch")
 const https = require('https');
+const moment = require('moment');
+const hasura = require('./hasura')
 const app = express();
 const PORT = process.env.PORT || 8000;
 
@@ -20,7 +22,6 @@ app.get('/hello', async (req, res) => {
   });
 });
 
-
 /**
  * Schedule Appointment
  */
@@ -37,30 +38,6 @@ mutation Schedule_Appointment_Internal($email: String!, $name: String!, $start_d
 }
 `;
 
-// execute the parent operation in Hasura
-const Schedule_Appointment_Internal_execute = async (variables, req) => {
-  const fetchResponse = await nodefetch(
-    "https://touching-herring-78.hasura.app/v1/graphql",
-    {
-      method: 'POST',
-      headers: {
-        "x-hasura-admin-secret": "i60TrY3974a4zCkVvXhgwAT1MTad2f5N0SSgERnDluFsFq3923PCeEML2IA7DRY6",
-        "Content-Type": "application/json",
-        "Accept": "*/*",
-        "Host": "touching-herring-78.hasura.app",
-        "Accept-Encoding": "gzip, deflate, br",
-      },
-      body: JSON.stringify({
-        query: Schedule_Appointment_Internal_HASURA_OPERATION,
-        variables
-      })
-    }
-  );
-  const data = await fetchResponse.json();
-  console.log('DEBUG: ', data);
-  return data;
-};
-
 
 // Request Handler
 app.post('/Schedule_Appointment', async (req, res) => {
@@ -68,14 +45,19 @@ app.post('/Schedule_Appointment', async (req, res) => {
   // get request input
   const variables = req.body.input;
 
-  // run some business logic
-
   // execute the Hasura operation
-  const { data, errors } = await Schedule_Appointment_Internal_execute(variables, req);
+  const { data, errors } = await hasura.execute(Schedule_Appointment_Internal_HASURA_OPERATION, variables, req);
 
   // if Hasura operation errors, then throw error
   if (errors) {
     return res.status(400).json(errors[0])
+  } else {
+    // Add async scheduled email reminder
+    hasura.setReminder(req.start_datetime, data.insert_appointment_one.appointment_id).then(({ event_id, message }) => {
+      console.info(message)
+      // Update Event ID
+      hasura.updateEventID(event_id, data.insert_appointment_one.appointment_id).then(e => console.log(`EventId Attached to appointment`, e), error => console.error(error));
+    })
   }
 
   // success
@@ -103,31 +85,6 @@ mutation CancelAppointmentInternal($appointmentId: uuid!) {
 }
 `;
 
-// execute the parent operation in Hasura
-const CancelAppointmentInternal_execute = async (variables, req) => {
-  const fetchResponse = await nodefetch(
-    "https://touching-herring-78.hasura.app/v1/graphql",
-    {
-      method: 'POST',
-      headers: {
-        "x-hasura-admin-secret": "i60TrY3974a4zCkVvXhgwAT1MTad2f5N0SSgERnDluFsFq3923PCeEML2IA7DRY6",
-        "Content-Type": "application/json",
-        "Accept": "*/*",
-        "Host": "touching-herring-78.hasura.app",
-        "Accept-Encoding": "gzip, deflate, br",
-      },
-      body: JSON.stringify({
-        query: CancelAppointmentInternal_HASURA_OPERATION,
-        variables
-      })
-    }
-  );
-  const data = await fetchResponse.json();
-  console.log('DEBUG: ', data);
-  return data;
-};
-  
-
 // Request Handler
 app.post('/Cancel_Appointment', async (req, res) => {
 
@@ -137,11 +94,13 @@ app.post('/Cancel_Appointment', async (req, res) => {
   // run some business logic
 
   // execute the Hasura operation
-  const { data, errors } = await CancelAppointmentInternal_execute({ appointmentId }, req);
+  const { data, errors } = await hasura.execute(CancelAppointmentInternal_HASURA_OPERATION, { appointmentId }, req);
 
   // if Hasura operation errors, then throw error
   if (errors) {
     return res.status(400).json(errors[0])
+  } else {
+    hasura.cancelReminder(data.update_appointment.returning.find(e => e).event_id)
   }
 
   // success
